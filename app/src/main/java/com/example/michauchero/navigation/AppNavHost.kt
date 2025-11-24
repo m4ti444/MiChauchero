@@ -21,20 +21,16 @@ import androidx.navigation.compose.rememberNavController
 import com.example.michauchero.AppGraph
 import com.example.michauchero.ui.screens.BudgetScreen
 import com.example.michauchero.ui.screens.BillsScreen
-import com.example.michauchero.HomeScreen
-import com.example.michauchero.ui.screens.TransactionsScreen
+import com.example.michauchero.ui.screens.HomeScreen
 import com.example.michauchero.viewmodel.BillsViewModel
 import com.example.michauchero.viewmodel.BillsViewModelFactory
 import com.example.michauchero.viewmodel.BudgetViewModel
 import com.example.michauchero.viewmodel.BudgetViewModelFactory
 import com.example.michauchero.viewmodel.HomeViewModel
 import com.example.michauchero.viewmodel.HomeViewModelFactory
-import com.example.michauchero.viewmodel.TransactionsViewModel
-import com.example.michauchero.viewmodel.TransactionsViewModelFactory
 
 sealed class Dest(val route: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     data object Home : Dest("home", Icons.Filled.Home)
-    data object Transactions : Dest("transactions", Icons.Filled.Assignment)
     data object Budget : Dest("budget", Icons.Filled.AccountBalanceWallet)
     data object Bills : Dest("bills", Icons.Filled.Notifications)
 }
@@ -42,7 +38,7 @@ sealed class Dest(val route: String, val icon: androidx.compose.ui.graphics.vect
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
-    val items = listOf(Dest.Home, Dest.Transactions, Dest.Budget, Dest.Bills)
+    val items = listOf(Dest.Home, Dest.Budget, Dest.Bills)
 
     Scaffold(
         bottomBar = {
@@ -71,10 +67,6 @@ fun AppNavHost(modifier: Modifier = Modifier) {
             composable(Dest.Home.route) {
                 val vm: HomeViewModel = viewModel(factory = HomeViewModelFactory(AppGraph.repository))
                 HomeScreen(vm, padding)
-            }
-            composable(Dest.Transactions.route) {
-                val vm: TransactionsViewModel = viewModel(factory = TransactionsViewModelFactory(AppGraph.repository))
-                TransactionsScreen(vm, padding)
             }
             composable(Dest.Budget.route) {
                 val vm: BudgetViewModel = viewModel(factory = BudgetViewModelFactory(AppGraph.repository))

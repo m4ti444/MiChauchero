@@ -23,6 +23,7 @@ import com.example.michauchero.viewmodel.BudgetViewModel
 fun BudgetScreen(viewModel: BudgetViewModel, padding: PaddingValues) {
     val amount by viewModel.amount.collectAsState()
     val input = remember { mutableStateOf(amount?.toString() ?: "") }
+    val error = remember { mutableStateOf<String?>(null) }
 
     androidx.compose.foundation.layout.Column(modifier = Modifier.padding(padding).padding(16.dp)) {
         Card(modifier = Modifier.fillMaxWidth()) {
@@ -33,8 +34,26 @@ fun BudgetScreen(viewModel: BudgetViewModel, padding: PaddingValues) {
             }
         }
         Spacer(Modifier.height(16.dp))
-        OutlinedTextField(value = input.value, onValueChange = { input.value = it }, label = { Text("Nuevo presupuesto") })
+        OutlinedTextField(
+            value = input.value,
+            onValueChange = {
+                input.value = it
+                val v = it.toDoubleOrNull()
+                error.value = when {
+                    it.isBlank() -> "Ingresa un monto"
+                    v == null -> "El monto debe ser numérico"
+                    v <= 0.0 -> "El monto debe ser mayor a 0"
+                    else -> null
+                }
+            },
+            isError = error.value != null,
+            label = { Text("Nuevo presupuesto") },
+            supportingText = { error.value?.let { Text(it) } }
+        )
         Spacer(Modifier.height(8.dp))
-        Button(onClick = { input.value.toDoubleOrNull()?.let { viewModel.setBudget(it) } }) { Text("Guardar") }
+        Button(
+            enabled = error.value == null && input.value.toDoubleOrNull() != null,
+            onClick = { input.value.toDoubleOrNull()?.let { viewModel.setBudget(it) } }
+        ) { Text("Guardar") }
     }
 }

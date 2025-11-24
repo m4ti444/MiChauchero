@@ -96,21 +96,83 @@ fun AddBillDialog(onDismiss: () -> Unit, onSave: (String, Double, String, String
     val amountStr = remember { mutableStateOf("") }
     val dueStr = remember { mutableStateOf(LocalDate.now().toString()) }
     val recurrence = remember { mutableStateOf("NONE") }
+    val titleError = remember { mutableStateOf<String?>(null) }
+    val amountError = remember { mutableStateOf<String?>(null) }
+    val dateError = remember { mutableStateOf<String?>(null) }
+    val recurrenceError = remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = { onSave(title.value, amountStr.value.toDoubleOrNull() ?: 0.0, dueStr.value, recurrence.value) }) { Text("Guardar") } },
+        confirmButton = {
+            val isValid = titleError.value == null && amountError.value == null && dateError.value == null && recurrenceError.value == null &&
+                    title.value.isNotBlank() && amountStr.value.toDoubleOrNull() != null
+            TextButton(
+                enabled = isValid,
+                onClick = {
+                    val amount = amountStr.value.toDoubleOrNull() ?: return@TextButton
+                    onSave(title.value, amount, dueStr.value, recurrence.value)
+                }
+            ) { Text("Guardar") }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
         title = { Text("Agregar pago/recordatorio") },
         text = {
             androidx.compose.foundation.layout.Column {
-                OutlinedTextField(value = title.value, onValueChange = { title.value = it }, label = { Text("Título") })
+                OutlinedTextField(
+                    value = title.value,
+                    onValueChange = {
+                        title.value = it
+                        titleError.value = if (it.isBlank()) "Ingresa un título" else null
+                    },
+                    isError = titleError.value != null,
+                    label = { Text("Título") },
+                    supportingText = { titleError.value?.let { Text(it) } }
+                )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(value = amountStr.value, onValueChange = { amountStr.value = it }, label = { Text("Monto") })
+                OutlinedTextField(
+                    value = amountStr.value,
+                    onValueChange = {
+                        amountStr.value = it
+                        val v = it.toDoubleOrNull()
+                        amountError.value = when {
+                            it.isBlank() -> "Ingresa un monto"
+                            v == null -> "El monto debe ser numérico"
+                            v <= 0.0 -> "El monto debe ser mayor a 0"
+                            else -> null
+                        }
+                    },
+                    isError = amountError.value != null,
+                    label = { Text("Monto") },
+                    supportingText = { amountError.value?.let { Text(it) } }
+                )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(value = dueStr.value, onValueChange = { dueStr.value = it }, label = { Text("Fecha de vencimiento (YYYY-MM-DD)") })
+                OutlinedTextField(
+                    value = dueStr.value,
+                    onValueChange = {
+                        dueStr.value = it
+                        dateError.value = try {
+                            LocalDate.parse(it)
+                            null
+                        } catch (_: Exception) {
+                            "Fecha inválida"
+                        }
+                    },
+                    isError = dateError.value != null,
+                    label = { Text("Fecha de vencimiento (YYYY-MM-DD)") },
+                    supportingText = { dateError.value?.let { Text(it) } }
+                )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(value = recurrence.value, onValueChange = { recurrence.value = it }, label = { Text("Recurrencia (NONE/WEEKLY/MONTHLY)") })
+                OutlinedTextField(
+                    value = recurrence.value,
+                    onValueChange = {
+                        recurrence.value = it
+                        val v = it.uppercase()
+                        recurrenceError.value = if (v in listOf("NONE", "WEEKLY", "MONTHLY")) null else "Valores: NONE, WEEKLY o MONTHLY"
+                    },
+                    isError = recurrenceError.value != null,
+                    label = { Text("Recurrencia (NONE/WEEKLY/MONTHLY)") },
+                    supportingText = { recurrenceError.value?.let { Text(it) } }
+                )
             }
         }
     )
